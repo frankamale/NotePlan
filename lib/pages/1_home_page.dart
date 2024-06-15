@@ -4,7 +4,7 @@ import '../components/tabs/schedule.dart';
 import '../components/tabs/notes.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -13,9 +13,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    Home(),
-    Notes(),
+  static final List<Widget> _pages = <Widget>[
+    const Schedule(),
+    const Notes(),
   ];
 
   void _onItemTapped(int index) {

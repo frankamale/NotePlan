@@ -1,51 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:rex/components/data/database.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:rex/components/data/schedule/schedule_controller.dart';
+import 'package:rex/components/data/schedule/schedule_data.dart';
 import 'package:rex/components/forms/add_schedule.dart';
-import 'package:rex/details/schedule_details.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class Schedule extends StatefulWidget {
+  const Schedule({Key? key}) : super(key: key);
 
   @override
-  State<Home> createState() => _HomeState();
+  _ScheduleState createState() => _ScheduleState();
 }
 
-class _HomeState extends State<Home> {
+class _ScheduleState extends State<Schedule> {
+  final scheduleController = Get.put(ScheduleController());
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeHive();
+  }
+
+  Future<void> _initializeHive() async {
+    await Hive.openBox<ScheduleData>('scheduleBox');
+    scheduleController.loadSchedule();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dbController = Get.put(DataBaseController());
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'SCHEDULE',
-          style: TextStyle(color: Colors.white, fontSize: 25),
+          "Schedule",
+          style: TextStyle(color: Colors.white),
         ),
-        centerTitle: true,
         backgroundColor: Colors.black,
+        centerTitle: true,
       ),
-      body: Obx(() {
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: dbController.schedules.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                Get.to(() => ScheduleDetails(index: index, data: dbController));
-              },
-              child: Dismissible(
-                key: UniqueKey(),
-                onDismissed: (direction) {
-                  dbController.delete(index);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: Colors.black,
-                      content: Text('Activity deleted'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+      body: Obx(() => ListView.builder(
+            itemCount: scheduleController.schedules.length,
+            itemBuilder: (context, index) {
+              final schedule = scheduleController.schedules[index];
+              return Dismissible(
+                key: Key(schedule.key.toString()),
                 direction: DismissDirection.endToStart,
                 background: Container(
                   color: Colors.red,
@@ -56,41 +53,36 @@ class _HomeState extends State<Home> {
                     color: Colors.white,
                   ),
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                      ),
-                      child: ListTile(
-                        title: Text(dbController.schedules[index].title),
-                        subtitle:
-                            Text(dbController.schedules[index].subheading),
-                        leading: const Icon(Icons.calendar_month_outlined),
-                        trailing: const Icon(Icons.access_time),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    )
-                  ],
+                onDismissed: (direction) {
+                  _deleteSchedule(index);
+                },
+                child: Card(
+                  child: ListTile(
+                    title: Text(schedule.title),
+                    subtitle: Text(schedule.description),
+                    trailing: Text(schedule.date),
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      }),
+              );
+            },
+          )),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Get.to(() => AddSchedule());
-        },
         backgroundColor: Colors.black,
-        elevation: 0,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 25,
-        ),
+        onPressed: () {
+          Get.to(() => const AddSchedule());
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _deleteSchedule(int index) {
+    scheduleController.delete(index);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Colors.black,
+        content: Text('Activity Deleted'),
+        duration: Duration(seconds: 2),
       ),
     );
   }

@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../details/note_details.dart';
-import '../data/notesController.dart';
-import '../data/notes_data.dart';
+import '../data/notes/notesController.dart';
 import '../forms/add_note.dart'; // Adjust import path as per your file structure
 
 class Notes extends StatefulWidget {

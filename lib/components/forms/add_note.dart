@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:rex/components/data/notes_data.dart';
+import 'package:rex/components/data/notes/notes_data.dart';
 
 import '../../details/note_details.dart';
-import '../data/notesController.dart';
+import '../data/notes/notesController.dart';
 
 class AddNotes extends StatefulWidget {
   const AddNotes({Key? key}) : super(key: key);

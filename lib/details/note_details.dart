@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:rex/components/data/notes_data.dart';
-import 'package:rex/components/data/notesController.dart';
+import 'package:rex/components/data/notes/notes_data.dart';
+import 'package:rex/components/data/notes/notesController.dart';
 import 'package:rex/components/tabs/notes.dart';
 import 'package:rex/pages/1_home_page.dart'; // Adjust import path as per your file structure
 
@@ -10,8 +10,7 @@ class ViewNotes extends StatefulWidget {
   final NotesData notesDat;
   final int index;
 
-  const ViewNotes({Key? key, required this.notesDat, required this.index})
-      : super(key: key);
+  const ViewNotes({super.key, required this.notesDat, required this.index});
 
   @override
   State<ViewNotes> createState() => _ViewNotesState();
