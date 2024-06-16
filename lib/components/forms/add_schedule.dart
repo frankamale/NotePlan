@@ -1,33 +1,28 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:rex/components/data/schedule/schedule_controller.dart';
 import 'package:rex/components/data/schedule/schedule_data.dart';
-import 'package:hive/hive.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../../main.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class AddSchedule extends StatefulWidget {
-  const AddSchedule({Key? key}) : super(key: key);
+  const AddSchedule({super.key});
 
   @override
   State<AddSchedule> createState() => _AddScheduleState();
 }
 
 class _AddScheduleState extends State<AddSchedule> {
-  final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
-  final TextEditingController _activityController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  TextEditingController _dateController = TextEditingController();
+  TextEditingController _timeController = TextEditingController();
+  TextEditingController _activityController = TextEditingController();
+  TextEditingController _descriptionController = TextEditingController();
 
-  final ScheduleController scheduleController = Get.find();
-
-  @override
-  void dispose() {
-    _dateController.dispose();
-    _timeController.dispose();
-    _activityController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
+  final schedule = ScheduleController();
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +38,9 @@ class _AddScheduleState extends State<AddSchedule> {
       ),
       body: Center(
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(12),
+          height: 700,
+          width: double.infinity,
           child: Card(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -91,12 +88,11 @@ class _AddScheduleState extends State<AddSchedule> {
                     },
                     readOnly: true,
                     decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      labelText: "Date",
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      prefixIcon: const Icon(Icons.calendar_today),
-                    ),
+                        border: const OutlineInputBorder(),
+                        labelText: "Date",
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        prefixIcon: const Icon(Icons.calendar_today)),
                   ),
                   const Text(
                     "Time:",
@@ -109,45 +105,42 @@ class _AddScheduleState extends State<AddSchedule> {
                     },
                     readOnly: true,
                     decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      labelText: "Time",
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      prefixIcon: const Icon(Icons.timelapse),
-                    ),
+                        border: const OutlineInputBorder(),
+                        labelText: "Time",
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        prefixIcon: const Icon(Icons.timelapse)),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                        ),
-                        onPressed: () {
-                          Get.back();
-                        },
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
+                          style: ButtonStyle(
+                              backgroundColor:
+                                  MaterialStateProperty.all(Colors.black)),
+                          onPressed: () {
+                            Get.back();
+                          },
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(color: Colors.white),
+                          )),
                       const SizedBox(
                         width: 30,
                       ),
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                        ),
-                        onPressed: () {
-                          addTask();
-                        },
-                        child: const Text(
-                          "Submit",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
+                          style: ButtonStyle(
+                              backgroundColor:
+                                  MaterialStateProperty.all(Colors.black)),
+                          onPressed: () {
+                            addTask();
+                          },
+                          child: const Text(
+                            "Submit",
+                            style: TextStyle(color: Colors.white),
+                          )),
                     ],
-                  ),
+                  )
                 ],
               ),
             ),
@@ -159,11 +152,10 @@ class _AddScheduleState extends State<AddSchedule> {
 
   Future<void> _selectDate() async {
     DateTime? picked = await showDatePicker(
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2030),
-      context: context,
-    );
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now(),
+        lastDate: DateTime(2030),
+        context: context);
     if (picked != null) {
       setState(() {
         _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
@@ -172,10 +164,8 @@ class _AddScheduleState extends State<AddSchedule> {
   }
 
   Future<void> _selectTime() async {
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
+    TimeOfDay? pickedTime =
+        await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (pickedTime != null) {
       setState(() {
         _timeController.text = pickedTime.format(context);
@@ -184,20 +174,19 @@ class _AddScheduleState extends State<AddSchedule> {
   }
 
   Future<void> addTask() async {
-    if (_activityController.text.isNotEmpty &&
-        _dateController.text.isNotEmpty &&
-        _timeController.text.isNotEmpty) {
+    if (_activityController.text.isNotEmpty) {
       var newSchedule = ScheduleData(
         title: _activityController.text,
-        date: "${_dateController.text}  ${_timeController.text}",
+        date: '"{$_dateController.text} ${_timeController.text}"',
         description: _descriptionController.text.isEmpty
             ? "No description Found"
             : _descriptionController.text,
       );
 
-      var box = Hive.box<ScheduleData>('scheduleBox');
+      var box = Hive.box<ScheduleData>("scheduleBox");
       await box.add(newSchedule);
-      scheduleController.loadSchedule(); // Refresh the schedule
+
+      scheduleAlarm(newSchedule);
 
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         backgroundColor: Colors.black,
@@ -209,10 +198,33 @@ class _AddScheduleState extends State<AddSchedule> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Colors.black,
-          content: Text('All fields are required'),
+          content: Text('Activity field is empty'),
           duration: Duration(seconds: 4),
         ),
       );
     }
+  }
+
+  void scheduleAlarm(ScheduleData schedule) {
+    final scheduledDate = DateFormat('yyyy-MM-dd HH:mm').parse(schedule.date);
+
+    flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      'Reminder: ${schedule.title}',
+      schedule.description,
+      tz.TZDateTime.from(scheduledDate, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'Notification',
+          'Pending task',
+          channelDescription: "",
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 }
